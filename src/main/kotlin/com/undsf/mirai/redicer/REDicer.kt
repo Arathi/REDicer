@@ -20,7 +20,7 @@ object REDicer : KotlinPlugin(
     JvmPluginDescription(
         id = "com.undsf.mirai.redicer",
         name = "REDicer",
-        version = "0.1.0",
+        version = "0.1.1",
     ) {
         author("Arathi of Nebnizilla")
         info("""骰了吧""")
@@ -31,7 +31,7 @@ object REDicer : KotlinPlugin(
     val patternDicePool = Pattern.compile("^w(w)?( )?(\\d+)(a(\\d+))?$")
 
     override fun onEnable() {
-        logger.info { "Plugin loaded" }
+        logger.info { "REDicer已启用" }
 
         globalEventChannel().subscribeMessages {
             startsWith(".") reply {
@@ -70,6 +70,13 @@ object REDicer : KotlinPlugin(
         }
         if (faceStr != null && faceStr.isNotEmpty()) {
             face = faceStr.toInt()
+        }
+
+        if (amount <= 0 || amount > 100) {
+            return "无效的骰子数量"
+        }
+        if (face <= 1 || face > 1048576) {
+            return "无效的骰子面数"
         }
 
         val resp = StringBuilder()
@@ -118,23 +125,61 @@ object REDicer : KotlinPlugin(
         }
 
         val resp = StringBuilder()
-        var diceLeft = amount
         var counter = 0
-        while (diceLeft > 0) {
+
+        var diceLeft = 0
+
+        if (showDetails) {
+            resp.append("[")
+        }
+        for (i in 1 .. amount) {
             val point = diceSvc.roll(10)
             if (showDetails) {
-                resp.appendLine("rd10 = $point")
+                if (i > 1) {
+                    resp.append(" ")
+                }
+                resp.append(point)
             }
 
             if (point >= threshold) {
                 counter++
             }
-            else {
+            if (point == 10) {
+                diceLeft++
+            }
+        }
+        if (showDetails) {
+            resp.append("] [")
+        }
+
+        var first = true
+        while (diceLeft > 0) {
+            val point = diceSvc.roll(10)
+            if (showDetails) {
+                if (!first) {
+                    resp.append(" ")
+                }
+                else {
+                    first = false
+                }
+                resp.append(point)
+            }
+
+            if (point >= threshold) {
+                counter++
+            }
+            if (point != 10) {
                 diceLeft--
             }
         }
-        resp.appendLine("有${counter}枚骰子点数达到${threshold}")
+        if (showDetails) {
+            resp.append("]")
+        }
 
+        resp.appendLine()
+        resp.appendLine("${matcher.group(0)} = $counter")
+
+        // resp.appendLine("有${counter}枚骰子点数达到${threshold}")
         return resp.toString()
     }
 }
