@@ -20,7 +20,7 @@ object REDicer : KotlinPlugin(
     JvmPluginDescription(
         id = "com.undsf.mirai.redicer",
         name = "REDicer",
-        version = "0.1.1",
+        version = "0.1.3",
     ) {
         author("Arathi of Nebnizilla")
         info("""骰了吧""")
@@ -28,7 +28,7 @@ object REDicer : KotlinPlugin(
 ) {
     val diceSvc = DiceService()
     val patternRoll = Pattern.compile("^r(\\d+)?d(\\d+)?\$")
-    val patternDicePool = Pattern.compile("^w(w)?( )?(\\d+)(a(\\d+))?$")
+    val patternDicePool = Pattern.compile("^w(w)?( )?(\\d+)( )?(a(\\d+))?( )?(\\+(\\d+))?( )?(\\-(\\d+))?\$")
 
     override fun onEnable() {
         logger.info { "REDicer已启用" }
@@ -101,6 +101,7 @@ object REDicer : KotlinPlugin(
     private suspend fun handleDicePool(sender: User, matcher: Matcher) : String {
         var amount = 0
         var threshold = 8
+        var addition = 0
         var showDetails = false
 
         val w = matcher.group(1)
@@ -116,12 +117,22 @@ object REDicer : KotlinPlugin(
             return "无效的骰子个数"
         }
 
-        val thresholdStr = matcher.group(5)
+        val thresholdStr = matcher.group(6)
         if (thresholdStr != null && thresholdStr.isNotEmpty()) {
             threshold = thresholdStr.toInt()
         }
         if (threshold < 5 || threshold > 10) {
             return "无效的加骰参数"
+        }
+
+        var plusStr = matcher.group(9)
+        if (plusStr != null && plusStr.isNotEmpty()) {
+            addition += plusStr.toInt()
+        }
+
+        var minusStr = matcher.group(12)
+        if (minusStr != null && minusStr.isNotEmpty()) {
+            addition -= minusStr.toInt()
         }
 
         val resp = StringBuilder()
@@ -173,13 +184,13 @@ object REDicer : KotlinPlugin(
             }
         }
         if (showDetails) {
-            resp.append("]")
+            resp.appendLine("]")
         }
 
-        resp.appendLine()
-        resp.appendLine("${matcher.group(0)} = $counter")
+        val result = counter + addition
+        logger.info("${matcher.group(0)} = $result")
+        resp.appendLine("${matcher.group(0)} = $result")
 
-        // resp.appendLine("有${counter}枚骰子点数达到${threshold}")
         return resp.toString()
     }
 }
