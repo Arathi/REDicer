@@ -27,7 +27,7 @@ object REDicer : KotlinPlugin(
     }
 ) {
     val diceSvc = DiceService()
-    val patternRoll = Pattern.compile("^r(\\d+)?d(\\d+)?\$")
+    val patternRoll = Pattern.compile("^r(\\d+)?d(\\d+)?(\\+(\\d+))?\$")
     val patternDicePool = Pattern.compile("^w(w)?( )?(\\d+)( )?(a(\\d+))?( )?(\\+(\\d+))?( )?(\\-(\\d+))?\$")
 
     override fun onEnable() {
@@ -62,14 +62,19 @@ object REDicer : KotlinPlugin(
     private suspend fun handleRoll(sender: User, matcher: Matcher) : String {
         var amount = 1
         var face = 100
+        var addition = 0
 
         val amountStr = matcher.group(1)
         val faceStr = matcher.group(2)
+        val additionStr = matcher.group(4)
         if (amountStr != null && amountStr.isNotEmpty()) {
             amount = amountStr.toInt()
         }
         if (faceStr != null && faceStr.isNotEmpty()) {
             face = faceStr.toInt()
+        }
+        if (additionStr != null && additionStr.isNotEmpty()) {
+            addition = additionStr.toInt()
         }
 
         if (amount <= 0 || amount > 100) {
@@ -77,6 +82,9 @@ object REDicer : KotlinPlugin(
         }
         if (face <= 1 || face > 1048576) {
             return "无效的骰子面数"
+        }
+        if (addition < -1048576 || addition > 1048576) {
+            return "无效的修正值"
         }
 
         val resp = StringBuilder()
@@ -88,6 +96,11 @@ object REDicer : KotlinPlugin(
             }
             resp.append(point)
             sum += point
+        }
+        if (addition > 0) {
+            resp.append(" + ")
+            resp.append(addition)
+            sum += addition
         }
 
         if (amount > 1) {
