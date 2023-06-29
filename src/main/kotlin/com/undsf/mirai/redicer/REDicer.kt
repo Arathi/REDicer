@@ -1,17 +1,11 @@
 package com.undsf.mirai.redicer
 
 import com.undsf.mirai.redicer.services.DiceService
-import kotlinx.coroutines.launch
-import net.mamoe.mirai.console.command.CommandManager
-import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
-import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.subscribeMessages
-import net.mamoe.mirai.message.data.MessageChain
-import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.info
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -20,15 +14,15 @@ object REDicer : KotlinPlugin(
     JvmPluginDescription(
         id = "com.undsf.mirai.redicer",
         name = "REDicer",
-        version = "0.1.3",
+        version = "0.1.4",
     ) {
         author("Arathi of Nebnizilla")
         info("""骰了吧""")
     }
 ) {
-    val diceSvc = DiceService()
-    val patternRoll = Pattern.compile("^r(\\d+)?d(\\d+)?(\\+(\\d+))?\$")
-    val patternDicePool = Pattern.compile("^w(w)?( )?(\\d+)( )?(a(\\d+))?( )?(\\+(\\d+))?( )?(\\-(\\d+))?\$")
+    private val diceSvc = DiceService()
+    private val patternRoll: Pattern = Pattern.compile("^r(\\d+)?d(\\d+)?(\\+(\\d+))?\$")
+    private val patternDicePool: Pattern = Pattern.compile("^w(w)?( )?(\\d+)( )?(a(\\d+))?( )?(\\+(\\d+))?( )?(\\-(\\d+))?\$")
 
     override fun onEnable() {
         logger.info { "REDicer已启用" }
@@ -41,7 +35,7 @@ object REDicer : KotlinPlugin(
         }
     }
 
-    suspend fun handleCommand(sender: User, message: String) : String? {
+    private suspend fun handleCommand(sender: User, message: String) : String? {
         val command = message.substring(1)
 
         // r命令
@@ -59,7 +53,7 @@ object REDicer : KotlinPlugin(
         return null
     }
 
-    private suspend fun handleRoll(sender: User, matcher: Matcher) : String {
+    private fun handleRoll(sender: User, matcher: Matcher) : String {
         var amount = 1
         var face = 100
         var addition = 0
@@ -111,7 +105,7 @@ object REDicer : KotlinPlugin(
         return "${matcher.group(0)} = $resp"
     }
 
-    private suspend fun handleDicePool(sender: User, matcher: Matcher) : String {
+    private fun handleDicePool(sender: User, matcher: Matcher) : String {
         var amount = 0
         var threshold = 8
         var addition = 0

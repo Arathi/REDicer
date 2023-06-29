@@ -8,7 +8,7 @@ object RollCommand : SimpleCommand(
     "roll",
     description = "常规骰子命令"
 ) {
-    val dice = DiceUtil()
+    private val dice = DiceUtil()
 
     /**
      * amount 骰子数量
